@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00c6ff"/>
+      <stop offset="100%" stop-color="#0072ff"/>
+    </linearGradient>
+
+    <!-- Chat Bubble Gradient -->
+    <linearGradient id="bubbleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e4e6eb"/>
+    </linearGradient>
+
+    <!-- Folder Badge Gradient -->
+    <linearGradient id="folderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffba00"/>
+      <stop offset="100%" stop-color="#ff8c00"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Filter -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- App Icon Base (Rounded Square) -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+
+  <g filter="url(#dropShadow)">
+    <!-- Main Chat Bubble (Messenger style) -->
+    <path d="M 120 230 C 120 150 180 90 270 90 C 360 90 420 150 420 230 C 420 310 360 370 270 370 C 245 370 222 364 200 352 L 140 370 L 155 315 C 133 292 120 263 120 230 Z" fill="url(#bubbleGrad)"/>
+    
+    <!-- Messenger Lightning / Search Sweep Icon inside Bubble -->
+    <path d="M 285 160 L 205 250 L 255 250 L 235 310 L 315 220 L 265 220 Z" fill="url(#bgGrad)"/>
+  </g>
+
+  <!-- Archive/Offline Folder Badge (Bottom Right) -->
+  <g filter="url(#dropShadow)">
+    <rect x="290" y="290" width="150" height="110" rx="18" fill="url(#folderGrad)"/>
+    <!-- Folder Tab -->
+    <path d="M 290 302 C 290 295 295 290 302 290 L 335 290 L 350 305 L 428 305 C 435 305 440 310 440 317 Z" fill="#ffa000"/>
+    <!-- Search Magnifier Line on Folder -->
+    <circle cx="355" cy="345" r="18" stroke="#ffffff" stroke-width="6" fill="none"/>
+    <line x1="368" y1="358" x2="382" y2="372" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>
