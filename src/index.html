@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FB Messenger Offline Viewer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-theme="dark" data-font="medium">
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <!-- Logo & Branding Header -->
+        <div class="header-brand-row">
+          <img src="assets/fb-messenger-viewer-icon.svg" alt="App Logo" class="app-logo" />
+          <div class="app-trademark">Made by LynellPhysioDev</div>
+        </div>
+        <div class="sidebar-title-row">
+          <h2>Chats</h2>
+          <div class="header-icon-group">
+            <button id="guide-btn" class="icon-btn" title="Export Guide / Welcome">❓</button>
+            <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+          </div>
+        </div>
+        
+        <div id="source-tabs" class="source-tabs" style="display:none;">
+          <button class="source-btn active" data-source="fb">Facebook</button>
+          <button class="source-btn" data-source="msg">Messenger</button>
+          <button class="source-btn" data-source="fav">★ Favorites</button>
+        </div>
+
+        <input id="my-name-input" class="name-select" type="text" list="my-name-options" placeholder="Type your name..." style="display:none;" />
+        <datalist id="my-name-options"></datalist>
+        
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input id="chat-search-input" type="text" placeholder="Search Messenger..." style="display:none;" />
+        </div>
+
+        <!-- Native Messenger Search Pill Filter Bar -->
+        <div id="search-filter-pills" class="search-pills-bar" style="display:none;">
+          <button class="pill-btn active" data-pill="all">All</button>
+          <button class="pill-btn" data-pill="people">People</button>
+          <button class="pill-btn" data-pill="messages">Messages</button>
+          <button class="pill-btn" data-pill="groups">Groups</button>
+        </div>
+      </div>
+      <div id="chat-list" class="chat-list">
+        <p class="placeholder-text">Open Settings (⚙️) or the Guide (❓) to load an export folder.</p>
+      </div>
+    </aside>
+
+    <div id="resizer" class="resizer"></div>
+
+    <main class="chat-area">
+      <header id="chat-header" class="chat-header">
+        <div class="chat-header-left">
+          <div id="chat-header-avatar"></div>
+          <h3 id="current-chat-title">Select a conversation</h3>
+        </div>
+        <div id="chat-header-actions" class="chat-header-actions" style="display:none;">
+          <button id="favorite-btn" class="icon-btn" title="Toggle Favorite">☆</button>
+          <button id="msg-search-btn" class="icon-btn" title="Search in this chat">🔍</button>
+          <button id="export-chat-btn" class="icon-btn" title="Export Chat Log">📥</button>
+          <button id="info-btn" class="icon-btn" title="Chat info">ℹ️</button>
+        </div>
+      </header>
+
+      <div id="msg-search-bar" class="msg-search-bar" style="display:none;">
+        <input id="msg-search-input" type="text" placeholder="Search messages in this thread..." />
+        <span id="msg-search-count" class="msg-search-count"></span>
+        <button id="msg-search-prev" class="icon-btn">↑</button>
+        <button id="msg-search-next" class="icon-btn">↓</button>
+        <button id="msg-search-close" class="icon-btn">✕</button>
+      </div>
+
+      <div class="viewport-wrapper">
+        <div id="messages-viewport" class="messages-viewport">
+          <div class="placeholder-text">Select a chat from the sidebar to view messages.</div>
+        </div>
+        <!-- In-Chat Quick Jump Controls -->
+        <div id="quick-jump-controls" class="quick-jump-controls" style="display:none;">
+          <button id="jump-top-btn" class="jump-btn" title="Jump to Top">↑</button>
+          <button id="jump-bottom-btn" class="jump-btn" title="Jump to Bottom">↓</button>
+        </div>
+      </div>
+    </main>
+
+    <aside id="info-panel" class="info-panel" style="display:none;">
+      <div class="info-panel-header">
+        <h3>Chat Info</h3>
+        <button id="info-panel-close" class="icon-btn">✕</button>
+      </div>
+      <div class="info-panel-body">
+        <div id="info-panel-avatar-wrap" class="info-panel-avatar-wrap"></div>
+        <h3 id="info-panel-name" class="info-panel-name"></h3>
+        <p id="info-panel-participants" class="info-panel-participants"></p>
+
+        <!-- Media & Files Section -->
+        <div class="info-section">
+          <button class="info-section-toggle" id="media-toggle">
+            <span>Media and files</span><span class="chevron">▾</span>
+          </button>
+          <div id="media-section" class="info-section-body" style="display:none;">
+            <div id="media-filter-pills" class="media-pills-bar">
+              <button class="media-pill-btn active" data-media-type="all">All</button>
+              <button class="media-pill-btn" data-media-type="images">Images</button>
+              <button class="media-pill-btn" data-media-type="videos">Videos</button>
+              <button class="media-pill-btn" data-media-type="audio">Voice Notes</button>
+              <button class="media-pill-btn" data-media-type="files">Files</button>
+            </div>
+            <div id="gallery-grid" class="gallery-grid"></div>
+          </div>
+        </div>
+
+        <!-- Date Range Filter Section -->
+        <div class="info-section">
+          <button class="info-section-toggle" id="timeline-toggle">
+            <span>Date Range Filter</span><span class="chevron">▾</span>
+          </button>
+          <div id="timeline-section" class="info-section-body" style="display:none;">
+            <div class="date-filter-group">
+              <label for="date-start">From:</label>
+              <input type="date" id="date-start" class="date-input" />
+            </div>
+            <div class="date-filter-group">
+              <label for="date-end">To:</label>
+              <input type="date" id="date-end" class="date-input" />
+            </div>
+            <div class="date-filter-actions">
+              <button id="btn-apply-date-filter" class="filter-btn primary">Apply Filter</button>
+              <button id="btn-clear-date-filter" class="filter-btn">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Jump to Specific Day Section -->
+        <div class="info-section">
+          <button class="info-section-toggle" id="specific-day-toggle">
+            <span>Specific Day</span><span class="chevron">▾</span>
+          </button>
+          <div id="specific-day-section" class="info-section-body" style="display:none;">
+            <div class="date-filter-group">
+              <label for="info-date-jumper">Jump to date:</label>
+              <input type="date" id="info-date-jumper" class="date-input" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Welcome & Export Guide Onboarding Modal -->
+    <div id="welcome-modal" class="modal-overlay" style="display:none;">
+      <div class="welcome-card">
+        <button id="welcome-close" class="modal-close-icon">✕</button>
+        
+        <!-- Screen 1: Welcome & Privacy -->
+        <div id="welcome-screen-1" class="welcome-screen">
+          <h2 class="welcome-title">Welcome to Chat Archive Viewer</h2>
+          <div class="welcome-subtitle">Developed by <strong>LynellPhysioDev</strong></div>
+          <p class="welcome-text">Easily browse, search, and view your Facebook and Messenger chat exports through a clean, modern interface.</p>
+          
+          <div class="privacy-box">
+            <div class="privacy-header">🔒 100% Local & Private</div>
+            <p>Your chat logs, photos, and JSON files are processed entirely inside your browser. No personal messages or data are ever uploaded, stored, or sent to external servers.</p>
+          </div>
+
+          <div class="welcome-actions">
+            <button id="goto-screen-2-btn" class="welcome-primary-btn">View Export Guide →</button>
+          </div>
+        </div>
+
+        <!-- Screen 2: Step-by-Step Instructions -->
+        <div id="welcome-screen-2" class="welcome-screen" style="display:none;">
+          <h3 class="screen-heading">Step-by-Step Export Instructions</h3>
+          
+          <div class="guide-tabs-bar">
+            <button id="guide-tab-fb" class="guide-tab-btn active">Tab 1: Facebook Account Export</button>
+            <button id="guide-tab-msg" class="guide-tab-btn">Tab 2: Messenger Encrypted Chats</button>
+          </div>
+
+          <div id="guide-tab-fb-content" class="guide-tab-content">
+            <ol class="guide-steps-list">
+              <li>Go to <strong>Settings & Privacy</strong> → <strong>Settings</strong> → <strong>Accounts Centre</strong>.</li>
+              <li>Select <strong>Your Information and Permissions</strong> → <strong>Export Your Information</strong>.</li>
+              <li>Click <strong>Create Export</strong>, select your profile, and choose <strong>Export to Device</strong>.</li>
+              <li>Set your format to <strong>JSON</strong>, select your date range, and click <strong>Start Export</strong>.</li>
+              <li>Once downloaded, extract the ZIP file and navigate to:<br><code>your_facebook_activity/messages</code></li>
+            </ol>
+            <div class="quick-link-box">
+              💡 <strong>Quick Link:</strong> Direct shortcut to <a href="https://accountscenter.facebook.com/info_and_permissions/dyi" target="_blank" rel="noopener">Meta Accounts Centre</a>.
+            </div>
+          </div>
+
+          <div id="guide-tab-msg-content" class="guide-tab-content" style="display:none;">
+            <p class="guide-note"><em>(Messenger's Secure Storage/End-to-End Encryption is required to download conversation)</em></p>
+            <ol class="guide-steps-list">
+              <li>Open <strong><a href="https://www.messenger.com" target="_blank" rel="noopener">Messenger.com</a></strong> on a computer and click your profile picture.</li>
+              <li>Go to <strong>Privacy & Safety</strong> → <strong>End-to-End Encrypted Chats</strong>.</li>
+              <li>Select <strong>Secure Storage</strong> → <strong>Download Secure Storage Data</strong>.</li>
+              <li>Click <strong>Download File</strong> and enter your Facebook password when prompted.</li>
+              <li>Save and extract the file to view your encrypted message history.</li>
+            </ol>
+          </div>
+
+          <div class="welcome-nav-bar">
+            <button id="back-to-screen-1-btn" class="welcome-nav-btn">← Back</button>
+            <button id="goto-screen-3-btn" class="welcome-primary-btn">Next Step →</button>
+          </div>
+        </div>
+
+        <!-- Screen 3: Ready to Launch -->
+        <div id="welcome-screen-3" class="welcome-screen" style="display:none;">
+          <h2 class="welcome-title">Ready to Launch</h2>
+          <div class="ready-box">
+            <div class="ready-icon">📁</div>
+            <div class="ready-header">Ready to Import</div>
+            <p>Drag and drop your extracted <code>inbox</code> folder directly onto the app window to begin parsing your chats, or use Viewer Settings (⚙️) to load data.</p>
+          </div>
+
+          <div class="dont-show-row">
+            <label class="checkbox-container">
+              <input type="checkbox" id="dont-show-again-chk" />
+              <span>Don't show this guide on launch</span>
+            </label>
+          </div>
+
+          <div class="welcome-nav-bar">
+            <button id="back-to-screen-2-btn" class="welcome-nav-btn">← Back</button>
+            <button id="get-started-btn" class="welcome-primary-btn green">Get Started</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Viewer Settings</h3>
+          <button id="settings-close" class="icon-btn">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-section-title">Data Import</div>
+          <div class="load-buttons-container">
+            <button id="btn-load-fb" class="load-action-btn">📁 Load Facebook Export</button>
+            <button id="btn-load-msg" class="load-action-btn">📁 Load Messenger Export</button>
+          </div>
+
+          <div class="modal-section-title" style="margin-top: 10px;">Appearance & Preferences</div>
+          <div class="setting-item">
+            <label>Theme</label>
+            <select id="setting-theme">
+              <option value="dark">Dark Mode</option>
+              <option value="light">Light Mode</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>Message Font Size</label>
+            <select id="setting-font">
+              <option value="small">Small (12px)</option>
+              <option value="medium">Medium (14px)</option>
+              <option value="large">Large (16px)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-reset-settings" class="modal-btn secondary">Reset Settings</button>
+          <button id="btn-save-settings" class="modal-btn primary">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lightbox with Dual Action Buttons -->
+    <div id="lightbox" class="lightbox" style="display:none;">
+      <span id="lightbox-close" class="lightbox-close">✕</span>
+      <div class="lightbox-actions-bar">
+        <button id="lightbox-jump-btn" class="lightbox-btn" style="display:none;">📍 Jump to message</button>
+        <button id="lightbox-reveal-btn" class="lightbox-btn secondary" style="display:none;">📁 Open File Location</button>
+      </div>
+      <div id="lightbox-content" class="lightbox-content"></div>
+    </div>
+  </div>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
