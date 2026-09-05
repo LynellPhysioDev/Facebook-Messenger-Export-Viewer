@@ -39,7 +39,6 @@ body { background-color: var(--bg-primary); color: var(--text-main); height: 100
 
 .sidebar-header { padding: 12px 16px 16px 16px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 4px; }
 
-/* Upper Top Left Logo & Trademark Branding */
 .header-brand-row {
   display: flex;
   align-items: center;
@@ -83,17 +82,16 @@ body { background-color: var(--bg-primary); color: var(--text-main); height: 100
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; opacity: 0.6; }
 .search-box input { width: 100%; padding: 8px 10px 8px 34px; border-radius: 18px; border: none; background-color: var(--bg-hover); color: var(--text-main); font-size: 13px; outline: none; }
 
-/* Native Messenger Search Pills */
 .search-pills-bar { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; }
 .pill-btn { background-color: var(--bg-hover); border: none; color: var(--text-main); padding: 6px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background-color 0.15s; }
 .pill-btn:hover { background-color: var(--border-color); }
 .pill-btn.active { background-color: #e7f3ff; color: #1877f2; }
 body[data-theme="dark"] .pill-btn.active { background-color: #263951; color: #4599ff; }
 
-/* Group Headers for Filter Results */
 .search-section-header { font-size: 12px; font-weight: 700; color: var(--text-sub); padding: 10px 12px 4px 12px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-.chat-list { flex: 1; overflow-y: auto; }
+/* GPU-Accelerated Scrollable List */
+.chat-list { flex: 1; overflow-y: auto; contain: strict; }
 .chat-item { padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-radius: 8px; margin: 2px 8px; }
 .chat-item:hover, .chat-item.active { background-color: var(--bg-hover); }
 
@@ -117,9 +115,8 @@ body[data-theme="dark"] .pill-btn.active { background-color: #263951; color: #45
 .msg-search-count { font-size: 12px; color: var(--text-sub); white-space: nowrap; }
 
 .viewport-wrapper { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; }
-.messages-viewport { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.messages-viewport { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; contain: content; }
 
-/* Message Rows & Flex Alignment Fix */
 .message-row { display: flex; flex-direction: column; width: 100%; }
 .message-row.outgoing { align-items: flex-end; }
 .message-row.incoming { align-items: flex-start; }
@@ -136,7 +133,6 @@ body[data-theme="dark"] .pill-btn.active { background-color: #263951; color: #45
 .sticker-media { max-width: 120px; cursor: pointer; }
 .placeholder-text { color: var(--text-sub); text-align: center; margin-top: 20px; font-size: 13px; }
 
-/* Custom Audio Player & Waveform Visualizer */
 .voice-note-card { display: flex; align-items: center; gap: 10px; background-color: var(--bg-hover); padding: 8px 12px; border-radius: 20px; width: 260px; margin-top: 4px; border: 1px solid var(--border-color); }
 .voice-play-btn { background-color: var(--accent); color: white; border: none; width: 34px; height: 34px; border-radius: 50%; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
 .voice-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
@@ -147,7 +143,6 @@ body[data-theme="dark"] .pill-btn.active { background-color: #263951; color: #45
 .voice-speed-btn { background: none; border: none; color: var(--text-sub); font-size: 10px; font-weight: 700; cursor: pointer; padding: 1px 4px; border-radius: 4px; }
 .voice-speed-btn:hover { background-color: var(--border-color); color: var(--text-main); }
 
-/* Quick Jump Floating Action Buttons */
 .quick-jump-controls { position: absolute; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 15; }
 .jump-btn { background-color: var(--bg-secondary); color: var(--text-main); border: 1px solid var(--border-color); width: 36px; height: 36px; border-radius: 50%; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.15s, background-color 0.15s; }
 .jump-btn:hover { background-color: var(--bg-hover); transform: scale(1.08); }
@@ -161,7 +156,6 @@ body[data-theme="dark"] .pill-btn.active { background-color: #263951; color: #45
 .info-section { width: 100%; border-top: 1px solid var(--border-color); padding-top: 10px; }
 .info-section-toggle { width: 100%; background: none; border: none; color: var(--text-main); font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; padding: 8px 4px; cursor: pointer; }
 
-/* Media & Files Filter Pills Container */
 .media-pills-bar {
   display: flex;
   flex-wrap: wrap;
@@ -195,7 +189,6 @@ body[data-theme="dark"] .pill-btn.active { background-color: #263951; color: #45
 .gallery-media-title { font-size: 12px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .gallery-media-sub { font-size: 10px; color: var(--text-sub); margin-top: 2px; }
 
-/* Date Filter Controls */
 .date-filter-group { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
 .date-filter-group label { font-size: 12px; color: var(--text-sub); }
 .date-input { padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-hover); color: var(--text-main); font-size: 13px; outline: none; }
@@ -206,8 +199,8 @@ body[data-theme="dark"] .date-input::-webkit-calendar-picker-indicator { filter:
 .filter-btn.primary { background-color: var(--accent); border: none; color: white; }
 .filter-btn.primary:hover { background-color: #0073e6; }
 
-/* Modal & Settings */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(4px); }
+/* Clean Hardware-Accelerated Modals */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 200; }
 .modal-card { width: 400px; background-color: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; }
 .modal-header { padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
 .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto; }
@@ -224,7 +217,6 @@ body[data-theme="dark"] .date-input::-webkit-calendar-picker-indicator { filter:
 .modal-btn.primary { background-color: var(--accent); color: white; border: none; }
 .modal-btn.primary:hover { background-color: #0073e6; }
 
-/* Welcome Onboarding Modal Styles */
 .welcome-card { width: 500px; max-width: 90vw; background-color: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; padding: 24px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 .modal-close-icon { position: absolute; top: 16px; right: 18px; background: none; border: none; color: var(--text-sub); font-size: 18px; cursor: pointer; }
 .modal-close-icon:hover { color: var(--text-main); }
@@ -273,7 +265,6 @@ body[data-theme="dark"] .date-input::-webkit-calendar-picker-indicator { filter:
 .welcome-nav-btn { background-color: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 14px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .welcome-nav-btn:hover { background-color: var(--border-color); }
 
-/* Lightbox & Action Buttons Bar */
 .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 100; }
 .lightbox-content img, .lightbox-content video { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
 .lightbox-close { position: absolute; top: 20px; right: 30px; font-size: 26px; color: white; cursor: pointer; }

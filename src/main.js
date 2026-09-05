@@ -80,6 +80,10 @@ let searchIndex = -1;
 let currentLightboxMsgIdx = null;
 let currentLightboxFile = null;
 
+// Performance Optimization State
+let loadedMessageCount = 80; // Render in batches of 80
+let searchDebounceTimer = null;
+
 // Tab-independent Search State
 const tabSearchState = {
   fb: { term: '', pill: 'all' },
@@ -186,11 +190,23 @@ if (nameInput) {
     myName = nameInput.value;
     localStorage.setItem('fb-viewer-my-name', myName);
     if (currentConversation) {
-      renderMessages(currentConversation);
+      renderMessages(currentConversation, false);
     }
     applyFilters();
   });
 }
+
+// Infinite Scroll Pagination for Huge Chat Logs
+viewport.addEventListener('scroll', () => {
+  if (viewport.scrollTop === 0 && currentConversation) {
+    if (loadedMessageCount < currentConversation.messages.length) {
+      const oldHeight = viewport.scrollHeight;
+      loadedMessageCount += 80;
+      renderMessages(currentConversation, false);
+      viewport.scrollTop = viewport.scrollHeight - oldHeight; // Keep scroll position stable
+    }
+  }
+});
 
 // --- Onboarding / Welcome Guide Flow ---
 function showWelcomeModal(screen = 1) {
@@ -207,7 +223,6 @@ function hideWelcomeModal() {
   welcomeModal.style.display = 'none';
 }
 
-// Check launch preference
 if (localStorage.getItem('fb-viewer-skip-welcome') !== 'true') {
   showWelcomeModal(1);
 }
@@ -355,9 +370,13 @@ btnResetSettings.addEventListener('click', () => {
   localStorage.setItem('fb-viewer-font', 'medium');
 });
 
-// Quick Jump Navigation Listeners
+// Quick Jump Navigation
 jumpTopBtn.addEventListener('click', () => {
-  viewport.scrollTo({ top: 0, behavior: 'smooth' });
+  if (currentConversation) {
+    loadedMessageCount = currentConversation.messages.length;
+    renderMessages(currentConversation, false);
+    viewport.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 });
 
 jumpBottomBtn.addEventListener('click', () => {
@@ -365,6 +384,11 @@ jumpBottomBtn.addEventListener('click', () => {
 });
 
 function jumpToMessageIndex(idx) {
+  if (currentConversation && idx < (currentConversation.messages.length - loadedMessageCount)) {
+    loadedMessageCount = currentConversation.messages.length - idx + 20;
+    renderMessages(currentConversation, false);
+  }
+
   const targetRow = viewport.querySelector(`[data-msg-index="${idx}"]`);
   if (targetRow) {
     targetRow.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -376,7 +400,7 @@ function jumpToMessageIndex(idx) {
   }
 }
 
-// Specific Day Section Toggle & Jumper Listener
+// Specific Day Section Toggle & Jumper
 specificDayToggle.addEventListener('click', () => {
   specificDaySection.style.display = specificDaySection.style.display === 'none' ? 'flex' : 'none';
   if (specificDaySection.style.display === 'flex') {
@@ -389,31 +413,16 @@ infoDateJumper.addEventListener('change', (e) => {
   if (!selectedDateStr || !currentConversation) return;
 
   const targetTime = new Date(selectedDateStr + 'T00:00:00').getTime();
-  const rows = viewport.querySelectorAll('.message-row');
-  let targetRow = null;
+  const targetIdx = currentConversation.messages.findIndex(m => m.timestamp_ms >= targetTime);
 
-  for (const row of rows) {
-    const msgIdx = Number(row.dataset.msgIndex);
-    const msg = currentConversation.messages[msgIdx];
-    if (msg && msg.timestamp_ms >= targetTime) {
-      targetRow = row;
-      break;
-    }
-  }
-
-  if (targetRow) {
-    targetRow.scrollIntoView({ block: 'start', behavior: 'smooth' });
-    const bubble = targetRow.querySelector('.message-bubble');
-    if (bubble) {
-      bubble.classList.add('search-active');
-      setTimeout(() => bubble.classList.remove('search-active'), 2000);
-    }
+  if (targetIdx !== -1) {
+    jumpToMessageIndex(targetIdx);
   } else {
     viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
   }
 });
 
-// Timeline Toggle & Filter Logic
+// Timeline Filter Logic
 timelineToggle.addEventListener('click', () => {
   timelineSection.style.display = timelineSection.style.display === 'none' ? 'flex' : 'none';
   if (timelineSection.style.display === 'flex') {
@@ -427,7 +436,7 @@ btnApplyDateFilter.addEventListener('click', () => {
   dateFilterStart = startVal ? new Date(startVal + 'T00:00:00').getTime() : null;
   dateFilterEnd = endVal ? new Date(endVal + 'T23:59:59').getTime() : null;
 
-  if (currentConversation) renderMessages(currentConversation);
+  if (currentConversation) renderMessages(currentConversation, true);
 });
 
 btnClearDateFilter.addEventListener('click', () => {
@@ -436,7 +445,7 @@ btnClearDateFilter.addEventListener('click', () => {
   dateFilterStart = null;
   dateFilterEnd = null;
 
-  if (currentConversation) renderMessages(currentConversation);
+  if (currentConversation) renderMessages(currentConversation, true);
 });
 
 // Parsers
@@ -657,10 +666,14 @@ chatSearchInput.addEventListener('focus', () => {
   searchFilterPills.style.display = 'flex';
 });
 
+// Debounced Search Input for Fast Typing
 chatSearchInput.addEventListener('input', () => {
   searchFilterPills.style.display = 'flex';
-  tabSearchState[activeSource].term = chatSearchInput.value;
-  applyFilters();
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    tabSearchState[activeSource].term = chatSearchInput.value;
+    applyFilters();
+  }, 200);
 });
 
 document.addEventListener('click', (e) => {
@@ -687,16 +700,10 @@ function applyFilters() {
   }
 
   if (pill === 'people') {
-    const results = list.filter(conv => {
-      return [...conv.participants].some(p => p.toLowerCase().includes(term));
-    });
+    const results = list.filter(conv => [...conv.participants].some(p => p.toLowerCase().includes(term)));
     renderChatList(results);
   } else if (pill === 'groups') {
-    const results = list.filter(conv => {
-      const isGroup = conv.participants.size > 2;
-      const titleMatch = conversationDisplayName(conv).toLowerCase().includes(term);
-      return isGroup && titleMatch;
-    });
+    const results = list.filter(conv => conv.participants.size > 2 && conversationDisplayName(conv).toLowerCase().includes(term));
     renderChatList(results);
   } else if (pill === 'messages') {
     renderMessageSearchResults(list, term);
@@ -721,6 +728,8 @@ function renderChatList(list) {
     chatListEl.innerHTML = `<p class="placeholder-text">No chats found.</p>`;
     return;
   }
+
+  const fragment = document.createDocumentFragment();
 
   list.forEach(conv => {
     const lastMsg = conv.messages.at(-1);
@@ -752,14 +761,17 @@ function renderChatList(list) {
     item.appendChild(textWrap);
 
     item.addEventListener('click', () => openConversation(conv));
-    chatListEl.appendChild(item);
+    fragment.appendChild(item);
   });
+
+  chatListEl.appendChild(fragment);
 }
 
 function renderMessageSearchResults(conversations, term) {
   chatListEl.innerHTML = '';
   let matchCount = 0;
   const re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  const fragment = document.createDocumentFragment();
 
   conversations.forEach(conv => {
     const matchingMsgs = conv.messages.filter(m => fixFbEncoding(m.content || '').toLowerCase().includes(term));
@@ -785,26 +797,29 @@ function renderMessageSearchResults(conversations, term) {
 
     item.appendChild(textWrap);
     item.addEventListener('click', () => openConversation(conv));
-    chatListEl.appendChild(item);
+    fragment.appendChild(item);
   });
 
   if (matchCount === 0) {
     chatListEl.innerHTML = `<p class="placeholder-text">No messages containing "${escapeHtml(term)}".</p>`;
+  } else {
+    chatListEl.appendChild(fragment);
   }
 }
 
 function renderAllSearchResults(peopleMatches, groupMatches, list, term) {
   chatListEl.innerHTML = '';
   let totalFound = 0;
+  const fragment = document.createDocumentFragment();
 
   if (peopleMatches.length > 0) {
     const hdr = document.createElement('div');
     hdr.className = 'search-section-header';
     hdr.textContent = 'People';
-    chatListEl.appendChild(hdr);
+    fragment.appendChild(hdr);
     peopleMatches.forEach(conv => {
       totalFound++;
-      appendChatItem(conv);
+      appendChatItemToFragment(conv, fragment);
     });
   }
 
@@ -812,10 +827,10 @@ function renderAllSearchResults(peopleMatches, groupMatches, list, term) {
     const hdr = document.createElement('div');
     hdr.className = 'search-section-header';
     hdr.textContent = 'Groups';
-    chatListEl.appendChild(hdr);
+    fragment.appendChild(hdr);
     groupMatches.forEach(conv => {
       totalFound++;
-      appendChatItem(conv);
+      appendChatItemToFragment(conv, fragment);
     });
   }
 
@@ -824,7 +839,7 @@ function renderAllSearchResults(peopleMatches, groupMatches, list, term) {
     const hdr = document.createElement('div');
     hdr.className = 'search-section-header';
     hdr.textContent = 'Messages';
-    chatListEl.appendChild(hdr);
+    fragment.appendChild(hdr);
 
     msgMatchedConvs.forEach(conv => {
       totalFound++;
@@ -849,16 +864,18 @@ function renderAllSearchResults(peopleMatches, groupMatches, list, term) {
 
       item.appendChild(textWrap);
       item.addEventListener('click', () => openConversation(conv));
-      chatListEl.appendChild(item);
+      fragment.appendChild(item);
     });
   }
 
   if (totalFound === 0) {
     chatListEl.innerHTML = `<p class="placeholder-text">No matches found for "${escapeHtml(term)}".</p>`;
+  } else {
+    chatListEl.appendChild(fragment);
   }
 }
 
-function appendChatItem(conv) {
+function appendChatItemToFragment(conv, fragment) {
   const displayName = conversationDisplayName(conv);
   const isFav = favoriteSignatures.has(conv.signature);
   const lastMsg = conv.messages.at(-1);
@@ -885,7 +902,7 @@ function appendChatItem(conv) {
   `;
   item.appendChild(textWrap);
   item.addEventListener('click', () => openConversation(conv));
-  chatListEl.appendChild(item);
+  fragment.appendChild(item);
 }
 
 function updateFavoriteButtonUI() {
@@ -905,7 +922,7 @@ favoriteBtn.addEventListener('click', () => {
   applyFilters();
 });
 
-// Export Chat Feature
+// Export Chat Log
 exportChatBtn.addEventListener('click', () => {
   if (!currentConversation) return;
   let log = `Chat Log: ${conversationDisplayName(currentConversation)}\nExported: ${new Date().toLocaleString()}\n----------------------------------------\n\n`;
@@ -925,6 +942,7 @@ exportChatBtn.addEventListener('click', () => {
 
 function openConversation(conv) {
   currentConversation = conv;
+  loadedMessageCount = 80; // Reset batch window on new conversation
   const displayName = conversationDisplayName(conv);
   chatTitleEl.textContent = displayName;
   chatHeaderAvatar.innerHTML = '';
@@ -936,10 +954,10 @@ function openConversation(conv) {
   closeSearch();
   infoPanel.style.display = 'none';
   applyFilters();
-  renderMessages(conv);
+  renderMessages(conv, true);
 }
 
-// Custom Waveform Voice Note Component
+// Custom Waveform Voice Note Player
 function createCustomAudioPlayer(url) {
   const audio = new Audio(url);
   const card = document.createElement('div');
@@ -1039,7 +1057,8 @@ function createCustomAudioPlayer(url) {
   return card;
 }
 
-function renderMessages(conv) {
+// Fast Single-Pass Batch Message Renderer
+function renderMessages(conv, scrollToBottom = true) {
   viewport.innerHTML = '';
   const cleanMyName = (myName || '').trim().toLowerCase();
 
@@ -1048,13 +1067,24 @@ function renderMessages(conv) {
     return;
   }
 
+  let filteredMessages = conv.messages;
+  if (dateFilterStart || dateFilterEnd) {
+    filteredMessages = filteredMessages.filter(m => {
+      if (dateFilterStart && m.timestamp_ms < dateFilterStart) return false;
+      if (dateFilterEnd && m.timestamp_ms > dateFilterEnd) return false;
+      return true;
+    });
+  }
+
+  // Slice to render chunked latest window
+  const startIndex = Math.max(0, filteredMessages.length - loadedMessageCount);
+  const visibleMessages = filteredMessages.slice(startIndex);
+
   let lastDateShown = null;
   let renderedCount = 0;
+  const fragment = document.createDocumentFragment();
 
-  conv.messages.forEach((msg, idx) => {
-    if (dateFilterStart && msg.timestamp_ms < dateFilterStart) return;
-    if (dateFilterEnd && msg.timestamp_ms > dateFilterEnd) return;
-
+  visibleMessages.forEach((msg) => {
     const hasPhotos = msg.photos && msg.photos.length > 0;
     const hasVideos = msg.videos && msg.videos.length > 0;
     const hasAudio = msg.audio_files && msg.audio_files.length > 0;
@@ -1065,11 +1095,13 @@ function renderMessages(conv) {
     if (!hasContent) return;
     renderedCount++;
 
+    const globalIdx = conv.messages.indexOf(msg);
+
     if (lastDateShown === null || !isSameDay(lastDateShown, msg.timestamp_ms)) {
       const sep = document.createElement('div');
       sep.className = 'date-separator';
       sep.textContent = formatDateSeparator(msg.timestamp_ms);
-      viewport.appendChild(sep);
+      fragment.appendChild(sep);
       lastDateShown = msg.timestamp_ms;
     }
 
@@ -1079,7 +1111,7 @@ function renderMessages(conv) {
 
     const row = document.createElement('div');
     row.className = `message-row ${isOutgoing ? 'outgoing' : 'incoming'}`;
-    row.dataset.msgIndex = idx;
+    row.dataset.msgIndex = globalIdx;
 
     const senderLabel = document.createElement('div');
     senderLabel.className = 'message-sender';
@@ -1105,7 +1137,7 @@ function renderMessages(conv) {
         const img = document.createElement('img');
         img.className = 'sticker-media';
         img.src = url;
-        img.addEventListener('click', () => openLightbox(url, false, idx, file));
+        img.addEventListener('click', () => openLightbox(url, false, globalIdx, file));
         bubble.appendChild(img);
         row.appendChild(bubble);
       }
@@ -1124,7 +1156,7 @@ function renderMessages(conv) {
         el.className = 'message-media';
         el.src = url;
         if (video) el.controls = true;
-        el.addEventListener('click', () => openLightbox(url, video, idx, file));
+        el.addEventListener('click', () => openLightbox(url, video, globalIdx, file));
         bubble.appendChild(el);
       });
       row.appendChild(bubble);
@@ -1164,17 +1196,18 @@ function renderMessages(conv) {
     timeDiv.textContent = formatTime(msg.timestamp_ms);
     row.appendChild(timeDiv);
 
-    viewport.appendChild(row);
+    fragment.appendChild(row);
   });
 
   if (renderedCount === 0) {
     viewport.innerHTML = '<div class="placeholder-text">No messages found within the selected date range.</div>';
   } else {
-    viewport.scrollTop = viewport.scrollHeight;
+    viewport.appendChild(fragment);
+    if (scrollToBottom) viewport.scrollTop = viewport.scrollHeight;
   }
 }
 
-// Search
+// Search Features
 msgSearchBtn.addEventListener('click', () => {
   msgSearchBar.style.display = msgSearchBar.style.display === 'none' ? 'flex' : 'none';
   if (msgSearchBar.style.display === 'flex') msgSearchInput.focus();
@@ -1247,7 +1280,7 @@ msgSearchPrev.addEventListener('click', () => {
   jumpToMatch();
 });
 
-// Info Panel & Gallery
+// Info Panel & Media Gallery
 infoBtn.addEventListener('click', () => {
   if (!currentConversation) return;
   const displayName = conversationDisplayName(currentConversation);
@@ -1283,6 +1316,7 @@ function updateActiveMediaPillUI(type) {
 function populateGallery(conv, filter = 'all') {
   galleryGrid.innerHTML = '';
   let totalItems = 0;
+  const fragment = document.createDocumentFragment();
 
   conv.messages.forEach((msg, idx) => {
     const photos = msg.photos || [];
@@ -1299,7 +1333,7 @@ function populateGallery(conv, filter = 'all') {
         const img = document.createElement('img');
         img.src = url;
         img.addEventListener('click', () => openLightbox(url, false, idx, file));
-        galleryGrid.appendChild(img);
+        fragment.appendChild(img);
       });
     }
 
@@ -1313,7 +1347,7 @@ function populateGallery(conv, filter = 'all') {
         video.src = url;
         video.muted = true;
         video.addEventListener('click', () => openLightbox(url, true, idx, file));
-        galleryGrid.appendChild(video);
+        fragment.appendChild(video);
       });
     }
 
@@ -1329,7 +1363,7 @@ function populateGallery(conv, filter = 'all') {
           <div class="gallery-media-sub">Click to jump to message</div>
         `;
         card.addEventListener('click', () => jumpToMessageIndex(idx));
-        galleryGrid.appendChild(card);
+        fragment.appendChild(card);
       });
     }
 
@@ -1345,13 +1379,15 @@ function populateGallery(conv, filter = 'all') {
           <div class="gallery-media-sub">Click to jump to message</div>
         `;
         card.addEventListener('click', () => jumpToMessageIndex(idx));
-        galleryGrid.appendChild(card);
+        fragment.appendChild(card);
       });
     }
   });
 
   if (totalItems === 0) {
     galleryGrid.innerHTML = '<p class="placeholder-text" style="grid-column: span 3;">No items found in this category.</p>';
+  } else {
+    galleryGrid.appendChild(fragment);
   }
 }
 
