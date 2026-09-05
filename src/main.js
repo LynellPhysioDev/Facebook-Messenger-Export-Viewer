@@ -179,6 +179,19 @@ const lightboxRevealBtn = document.getElementById('lightbox-reveal-btn');
 settingTheme.value = currentTheme;
 settingFont.value = currentFont;
 
+// Listen for dynamic updates to Name Input
+if (nameInput) {
+  nameInput.value = myName;
+  nameInput.addEventListener('input', () => {
+    myName = nameInput.value;
+    localStorage.setItem('fb-viewer-my-name', myName);
+    if (currentConversation) {
+      renderMessages(currentConversation);
+    }
+    applyFilters();
+  });
+}
+
 // --- Onboarding / Welcome Guide Flow ---
 function showWelcomeModal(screen = 1) {
   welcomeScreen1.style.display = screen === 1 ? 'flex' : 'none';
@@ -268,7 +281,7 @@ async function traverseFileTree(item, fileList, path = '') {
   if (item.isFile) {
     return new Promise((resolve) => {
       item.file((file) => {
-        files.push(file);
+        fileList.push(file);
         resolve();
       });
     });
@@ -695,7 +708,8 @@ function applyFilters() {
 }
 
 function conversationDisplayName(conv) {
-  const others = [...conv.participants].filter(p => p !== myName);
+  const cleanMyName = (myName || '').trim().toLowerCase();
+  const others = [...conv.participants].filter(p => p.trim().toLowerCase() !== cleanMyName);
   if (others.length === 1) return others[0];
   if (conv.title && conv.title !== 'Conversation') return conv.title;
   return [...conv.participants].join(', ') || 'Conversation';
@@ -719,7 +733,9 @@ function renderChatList(list) {
 
     let preview = '';
     if (lastMsg) {
-      const isMe = lastMsg.sender_name && fixFbEncoding(lastMsg.sender_name) === myName;
+      const cleanSender = fixFbEncoding(lastMsg.sender_name || '').trim().toLowerCase();
+      const cleanMyName = (myName || '').trim().toLowerCase();
+      const isMe = cleanSender !== '' && cleanSender === cleanMyName;
       const prefix = isMe ? 'You: ' : '';
       if (lastMsg.content) preview = prefix + fixFbEncoding(lastMsg.content);
       else if (lastMsg.photos && lastMsg.photos.length) preview = prefix + '📷 Photo';
@@ -853,7 +869,9 @@ function appendChatItem(conv) {
 
   let preview = '';
   if (lastMsg) {
-    const isMe = lastMsg.sender_name && fixFbEncoding(lastMsg.sender_name) === myName;
+    const cleanSender = fixFbEncoding(lastMsg.sender_name || '').trim().toLowerCase();
+    const cleanMyName = (myName || '').trim().toLowerCase();
+    const isMe = cleanSender !== '' && cleanSender === cleanMyName;
     const prefix = isMe ? 'You: ' : '';
     if (lastMsg.content) preview = prefix + fixFbEncoding(lastMsg.content);
     else if (lastMsg.photos && lastMsg.photos.length) preview = prefix + '📷 Photo';
@@ -1023,7 +1041,9 @@ function createCustomAudioPlayer(url) {
 
 function renderMessages(conv) {
   viewport.innerHTML = '';
-  if (!myName) {
+  const cleanMyName = (myName || '').trim().toLowerCase();
+
+  if (!cleanMyName) {
     viewport.innerHTML = '<div class="placeholder-text">Type your name in the box above to tell messages apart.</div>';
     return;
   }
@@ -1054,7 +1074,8 @@ function renderMessages(conv) {
     }
 
     const sender = fixFbEncoding(msg.sender_name || '');
-    const isOutgoing = sender === myName;
+    const cleanSender = sender.trim().toLowerCase();
+    const isOutgoing = cleanSender !== '' && cleanSender === cleanMyName;
 
     const row = document.createElement('div');
     row.className = `message-row ${isOutgoing ? 'outgoing' : 'incoming'}`;

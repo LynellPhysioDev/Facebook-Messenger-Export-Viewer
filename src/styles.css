@@ -118,14 +118,16 @@ body[data-theme="dark"] .pill-btn.active { background-color: #263951; color: #45
 
 .viewport-wrapper { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .messages-viewport { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-.message-row { display: flex; flex-direction: column; max-width: 60%; }
-.message-row.outgoing { align-self: flex-end; align-items: flex-end; }
-.message-row.incoming { align-self: flex-start; align-items: flex-start; }
+
+/* Message Rows & Flex Alignment Fix */
+.message-row { display: flex; flex-direction: column; width: 100%; }
+.message-row.outgoing { align-items: flex-end; }
+.message-row.incoming { align-items: flex-start; }
 
 .message-sender { font-size: 11px; color: var(--text-sub); margin-bottom: 2px; padding: 0 4px; }
-.message-bubble { padding: 10px 14px; border-radius: 18px; font-size: var(--msg-font-size); line-height: 1.4; word-wrap: break-word; }
-.message-bubble.incoming { background-color: var(--bubble-in); color: var(--text-main); }
-.message-bubble.outgoing { background-color: var(--bubble-out); color: white; }
+.message-bubble { padding: 10px 14px; border-radius: 18px; font-size: var(--msg-font-size); line-height: 1.4; word-wrap: break-word; max-width: 65%; }
+.message-bubble.incoming { background-color: var(--bubble-in); color: var(--text-main); border-bottom-left-radius: 4px; }
+.message-bubble.outgoing { background-color: var(--bubble-out); color: white; border-bottom-right-radius: 4px; }
 .message-bubble.sticker-bubble, .message-bubble.empty-media-bubble { background: none; padding: 0; }
 .message-bubble mark { background-color: #ffd400; color: #18191a; border-radius: 3px; }
 .message-bubble.search-active { outline: 2px solid #ffd400; }
